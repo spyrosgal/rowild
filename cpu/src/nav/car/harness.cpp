@@ -30,10 +30,60 @@
 #include <fstream>
 #include <string>
 
+// Serialize + read TSC
+static inline uint64_t rdtsc() {
+    unsigned int lo, hi;
+    __asm__ volatile (
+        "cpuid\n\t"        // serialize
+        "rdtsc\n\t"        // read TSC into EDX:EAX
+        : "=a" (lo), "=d" (hi)
+        : "a"(0)
+        : "%ebx", "%ecx");
+    return ((uint64_t)hi << 32) | lo;
+}
+
+// Same but for end (use RDTSCP, which is ordered)
+static inline uint64_t rdtscp() {
+    unsigned int lo, hi;
+    __asm__ volatile (
+        "rdtscp\n\t"       // read TSC into EDX:EAX, ECX=core ID
+        "mov %%eax, %0\n\t"
+        "mov %%edx, %1\n\t"
+        "cpuid\n\t"        // serialize
+        : "=r"(lo), "=r"(hi)
+        :
+        : "%rax", "%rbx", "%rcx", "%rdx");
+    return ((uint64_t)hi << 32) | lo;
+}
+
 int main(int argc, const char **argv) {
     using args::FlagArg;
     using args::KVArg;
     using args::Parser;
+
+    // //////////
+    // cpu_set_t mask;
+    // CPU_ZERO(&mask);
+    // int ncpus = 8;
+    // for(int i = 20 - ncpus; i < 20; i++)
+    //     CPU_SET(i, &mask);  // add core 0
+    // // CPU_SET(2, &mask);  // add core 2
+
+    // pid_t pid = 0; // 0 means current process
+    // if (sched_setaffinity(pid, sizeof(mask), &mask) != 0) {
+    //     perror("sched_setaffinity");
+    //     return 1;
+    // }
+
+    // // Verify
+    // CPU_ZERO(&mask);
+    // if (sched_getaffinity(0, sizeof(mask), &mask) == 0) {
+    //     printf("Allowed CPUs:");
+    //     for (int i = 0; i < CPU_SETSIZE; ++i)
+    //         if (CPU_ISSET(i, &mask)) printf(" %d", i);
+    //     printf("\n");
+    // }
+    // //////////
 
     Parser parser(argv[0], argc, argv, false);
     KVArg<std::string> inputMapArg(parser, "map", "", "Input map file");
@@ -79,11 +129,17 @@ int main(int argc, const char **argv) {
                          idastar);
 
     // ROI begins
+    // uint64_t start, end;
+    // start = rdtsc();
+
     zsim_roi_begin();
 
     auto path = sdCar.run(maxIterations);
 
     zsim_roi_end();
+    // end = rdtscp();
+    // printf("Cycles: %llu\n", (unsigned long long)(end - start));
+
     // ROI ends
 
     // Write the output path

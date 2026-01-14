@@ -30,13 +30,13 @@ static inline void zsim_magic_op(uint64_t op) {
 #endif
 
 static inline void zsim_roi_begin() {
-    printf("[" HOOKS_STR "] ROI begin\n");
+    // printf("[" HOOKS_STR "] ROI begin\n");
     zsim_magic_op(ZSIM_MAGIC_OP_ROI_BEGIN);
 }
 
 static inline void zsim_roi_end() {
     zsim_magic_op(ZSIM_MAGIC_OP_ROI_END);
-    printf("[" HOOKS_STR  "] ROI end\n");
+    // printf("[" HOOKS_STR  "] ROI end\n");
 }
 
 static inline void zsim_heartbeat() {

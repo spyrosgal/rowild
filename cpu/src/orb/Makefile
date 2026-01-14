@@ -1,4 +1,4 @@
-INC_DIRS := ../../include /usr/include/opencv4
+INC_DIRS := ../../include /usr/local/include/opencv4
 SRC_DIRS := ./
 OBJ_DIR := ./obj
 BIN_DIR := .

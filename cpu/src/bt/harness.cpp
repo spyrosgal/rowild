@@ -92,13 +92,13 @@ int bookSearchAttempts = 0;
 
 Status navigateToShelf() {
     if (pathIsClear) {
-        std::cout << "Navigating to shelf...\n";
+        // std::cout << "Navigating to shelf...\n";
 
         // Simulated delay for the robot moving
         std::this_thread::sleep_for(std::chrono::seconds(2));
         return Status::SUCCESS;
     } else {
-        std::cout << "Navigation failed. Path is not clear.\n";
+        // std::cout << "Navigation failed. Path is not clear.\n";
         return Status::FAILURE;
     }
 }
@@ -106,52 +106,52 @@ Status navigateToShelf() {
 Status checkPathClear() {
     pathIsClear = (rand() % 2) == 0; // 50% chance path is clear
     if (pathIsClear) {
-        std::cout << "Path is clear!\n";
+        // std::cout << "Path is clear!\n";
         return Status::SUCCESS;
     } else {
-        std::cout << "Path is not clear.\n";
+        // std::cout << "Path is not clear.\n";
         return Status::FAILURE;
     }
 }
 
 Status waitForPath() {
-    std::cout << "Waiting for path to clear...\n";
+    // std::cout << "Waiting for path to clear...\n";
     std::this_thread::sleep_for(std::chrono::seconds(3));
     return checkPathClear();
 }
 
 Status searchBook() {
     while (bookSearchAttempts < 10) {
-        std::cout << "Searching for book...\n";
+        // std::cout << "Searching for book...\n";
         bookFound =
             (rand() % 2) == 0; // 50% chance to find the book each attempt
         bookSearchAttempts++;
 
         if (bookFound) {
-            std::cout << "Book found!\n";
+            // std::cout << "Book found!\n";
             return Status::SUCCESS;
         } else {
-            std::cout << "Book not found. Trying again...\n";
+            // std::cout << "Book not found. Trying again...\n";
         }
     }
-    std::cout << "Failed to find the book after multiple attempts.\n";
+    // std::cout << "Failed to find the book after multiple attempts.\n";
     return Status::FAILURE;
 }
 
 Status pickUpBook() {
     if (bookFound) {
-        std::cout << "Picking up the book...\n";
+        // std::cout << "Picking up the book...\n";
         // Simulated delay for picking up the book
         std::this_thread::sleep_for(std::chrono::seconds(1));
         return Status::SUCCESS;
     } else {
-        std::cout << "No book to pick up.\n";
+        // std::cout << "No book to pick up.\n";
         return Status::FAILURE;
     }
 }
 
 Status returnToStart() {
-    std::cout << "Returning to starting position...\n";
+    // std::cout << "Returning to starting position...\n";
     // Simulated delay for the robot moving
     std::this_thread::sleep_for(std::chrono::seconds(2));
     return Status::SUCCESS;

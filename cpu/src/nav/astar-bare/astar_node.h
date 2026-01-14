@@ -40,7 +40,7 @@ struct Node {
     Node() {
         s = {};
         g = f = 0;
-        parent = NULL;
+        parent = nullptr;
         dir = -1;
     }
 

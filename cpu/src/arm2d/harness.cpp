@@ -151,17 +151,17 @@ int main(int argc, const char **argv) {
     }
 
     auto printStats = [__totalTime, __numQueries](int severity) {
-        if (severity >= 1) {
-            std::cout << "[Stats]"
-                      << "  timePerQuery=" << __totalTime / __numQueries
-                      << std::endl;
-        }
+        // if (severity >= 1) {
+        //     std::cout << "[Stats]"
+        //               << "  timePerQuery=" << __totalTime / __numQueries
+        //               << std::endl;
+        // }
 
-        if (severity >= 2) {
-            std::cout << "[Detailed Stats]"
-                      << "  totalTime=" << __totalTime
-                      << ", numQueries=" << __numQueries << std::endl;
-        }
+        // if (severity >= 2) {
+        //     std::cout << "[Detailed Stats]"
+        //               << "  totalTime=" << __totalTime
+        //               << ", numQueries=" << __numQueries << std::endl;
+        // }
     };
 
     delete env;
