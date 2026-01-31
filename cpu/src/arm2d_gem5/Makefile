@@ -2,7 +2,7 @@ INC_DIRS := ../../include
 SRC_DIRS := ./
 OBJ_DIR := ./obj
 BIN_DIR := .
-EXE_NAME := sym_gem5.out
+EXE_NAME := arm2d_gem5.out
 
 INC := $(foreach d, $(INC_DIRS), -I$d)
 SRC := $(foreach d, $(SRC_DIRS), $(wildcard $d/*.cpp))

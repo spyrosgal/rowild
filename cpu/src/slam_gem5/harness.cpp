@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 #include "gem5/m5ops.h"
+#include "hw_contracts.h"
 
 std::vector<std::vector<double>> readLog(std::string inputLogFile) {
     std::ifstream logFile;
@@ -119,16 +120,23 @@ int main(int argc, const char **argv) {
     // ROI begins
     zsim_roi_begin();
     
+    uint64_t cid = hwc_create_contract();
+
+    hwc_add_core(cid);
+
+    hwc_set_deadline(cid, 100);
+
     int num_iters = 0;
     while(1) {
         // outputLog.push_back(slam->getStatus());
         for (auto input : inputLog) {
+            hwc_start_roi(cid);
             num_iters++;
-            if(!(num_iters % 1000)) {
-                char m5_buf[32];
-                int len = sprintf(m5_buf, "%d\n", num_iters);
-                m5_write_file(m5_buf, len, 0, "slam_stats.txt");
-            }
+            // if(!(num_iters % 1000)) {
+            //     char m5_buf[32];
+            //     int len = sprintf(m5_buf, "%d\n", num_iters);
+            //     m5_write_file(m5_buf, len, 0, "slam_stats.txt");
+            // }
             if (input.size() == 2) {
                 // Control input
                 slam->motionUpdate(input[0], input[1], input[2]);
@@ -142,6 +150,10 @@ int main(int argc, const char **argv) {
             // outputLog.push_back(slam->getStatus());
         }
     }
+
+    hwc_remove_core(cid);
+
+    hwc_delete_contract(cid);
 
     zsim_roi_end();
     // ROI ends

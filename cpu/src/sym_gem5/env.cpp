@@ -31,9 +31,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <iostream>
 
-using std::regex;
-using std::sregex_token_iterator;
+// using std::regex;
+// using std::sregex_token_iterator;
 
 Environment::Environment(const char *fileName) {
     auto parseSymbols = [](string symbolsStr) {
@@ -51,14 +52,14 @@ Environment::Environment(const char *fileName) {
 
     std::ifstream file(fileName);
 
-    regex symbolStateRegex("symbols:", regex::icase);
-    regex symbolRegex("([a-zA-Z0-9_, ]+) *");
-    regex initialConditionRegex("initialconditions:(.*)", regex::icase);
-    regex conditionRegex("(!?[A-Z][a-zA-Z_]*) *\\( *([a-zA-Z0-9_, ]+) *\\)");
-    regex goalConditionRegex("goalconditions:(.*)", regex::icase);
-    regex actionRegex("actions:", regex::icase);
-    regex precondRegex("preconditions:(.*)", regex::icase);
-    regex effectRegex("effects:(.*)", regex::icase);
+    std::regex symbolStateRegex("symbols:", std::regex::icase);
+    std::regex symbolRegex("([a-zA-Z0-9_, ]+) *");
+    std::regex initialConditionRegex("initialconditions:(.*)", std::regex::icase);
+    std::regex conditionRegex("(!?[A-Z][a-zA-Z_]*) *\\( *([a-zA-Z0-9_, ]+) *\\)");
+    std::regex goalConditionRegex("goalconditions:(.*)", std::regex::icase);
+    std::regex actionRegex("actions:", std::regex::icase);
+    std::regex precondRegex("preconditions:(.*)", std::regex::icase);
+    std::regex effectRegex("effects:(.*)", std::regex::icase);
 
     enum class PARSER {
         Symbols,
@@ -86,9 +87,9 @@ Environment::Environment(const char *fileName) {
             std::smatch results;
             if (regex_search(line, results, symbolStateRegex)) {
                 line = line.substr(8);
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            symbolRegex, 0);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
 
                 this->addSymbols(parseSymbols(iter->str()));
 
@@ -100,9 +101,9 @@ Environment::Environment(const char *fileName) {
             const char *lineC = line.c_str();
             if (regex_match(lineC, initialConditionRegex)) {
                 const std::vector<int> subMatches = {1, 2};
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            conditionRegex, subMatches);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
 
                 while (iter != end) {
                     // name
@@ -129,9 +130,9 @@ Environment::Environment(const char *fileName) {
             const char *lineC = line.c_str();
             if (regex_match(lineC, goalConditionRegex)) {
                 const std::vector<int> subMatches = {1, 2};
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            conditionRegex, subMatches);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
 
                 while (iter != end) {
                     // name
@@ -165,9 +166,9 @@ Environment::Environment(const char *fileName) {
             const char *lineC = line.c_str();
             if (regex_match(lineC, conditionRegex)) {
                 const std::vector<int> subMatches = {1, 2};
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            conditionRegex, subMatches);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
                 // name
                 actionName = iter->str();
                 iter++;
@@ -183,9 +184,9 @@ Environment::Environment(const char *fileName) {
             const char *lineC = line.c_str();
             if (regex_match(lineC, precondRegex)) {
                 const std::vector<int> subMatches = {1, 2};
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            conditionRegex, subMatches);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
 
                 while (iter != end) {
                     // name
@@ -216,9 +217,9 @@ Environment::Environment(const char *fileName) {
             const char *lineC = line.c_str();
             if (regex_match(lineC, effectRegex)) {
                 const std::vector<int> subMatches = {1, 2};
-                sregex_token_iterator iter(line.begin(), line.end(),
+                std::sregex_token_iterator iter(line.begin(), line.end(),
                                            conditionRegex, subMatches);
-                sregex_token_iterator end;
+                std::sregex_token_iterator end;
 
                 while (iter != end) {
                     // name
@@ -371,6 +372,5 @@ ostream &operator<<(ostream &os, const Environment &w) {
     os << "Actions:" << std::endl;
     for (Action g : w.actions)
         os << g << std::endl;
-    std::cout << "***** Environment Created! *****" << std::endl;
     return os;
 }

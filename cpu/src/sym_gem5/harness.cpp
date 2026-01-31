@@ -33,7 +33,7 @@
 #include <queue>
 #include <string>
 #include <vector>
-#include "gem5/m5ops.h"
+#include "hw_contracts.h"
 
 int nodes_generated = 0;
 
@@ -163,11 +163,11 @@ list<GroundedAction> plan(Environment *env, int aStarWeight) {
 
     while (!heap.empty()) {
         nodes_generated++;
-        if(!(nodes_generated % 10)) {
-            char m5_buf[32];
-            int len = sprintf(m5_buf, "%d\n", nodes_generated);
-            m5_write_file(m5_buf, len, 0, "sym_stats.txt");
-        }
+        // if(!(nodes_generated % 10)) {
+        //     char m5_buf[32];
+        //     int len = sprintf(m5_buf, "%d\n", nodes_generated);
+        //     m5_write_file(m5_buf, len, 0, "sym_stats.txt");
+        // }
         Node *expNode = heap.top();
         heap.pop();
 
@@ -209,11 +209,12 @@ int main(int argc, const char **argv) {
     using args::KVArg;
     using args::Parser;
 
-    char *msg = "Hello from sym_gem5!\n";
-    m5_write_file((void *) msg, strlen(msg), 0, "hello_sym.txt");
-    std::cout << "Sym Gem5 Harness" << std::endl;
+    // char *msg = "Hello from sym_gem5!\n";
+    // m5_write_file((void *) msg, strlen(msg), 0, "hello_sym.txt");
+    // std::cout << "Sym Gem5 Harness" << std::endl;
 
     Parser parser(argv[0], argc, argv, false);
+    KVArg<int> deadlinesArg(parser, "deadlines", "", "Whether we should actually track deadlines");
     KVArg<std::string> inputArg(parser, "input", "", "Input problem");
     KVArg<int> aStarWeightArg(parser, "weight", "", "A* weight");
     KVArg<std::string> outputPathArg(parser, "output", "", "Output path file");
@@ -222,6 +223,7 @@ int main(int argc, const char **argv) {
 
     assert_msg(inputArg.found(), "Input problem file is not provided");
 
+    const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
     const char *inputFile = inputArg.value().c_str();
     int aStarWeight = aStarWeightArg.found() ? aStarWeightArg.value() : 1;
     const char *outputFile =
@@ -232,8 +234,22 @@ int main(int argc, const char **argv) {
     // ROI begin
     zsim_roi_begin();
 
+    uint64_t cid = 0;
+
+    if(deadlines){
+        cid = hwc_create_contract();
+        hwc_add_core(cid);
+        hwc_set_deadline(cid, 3700);
+    }
+
     while (1) {
+        if(deadlines) hwc_start_roi(cid);
         std::list<GroundedAction> actions = plan(env, aStarWeight);
+    }
+
+    if(deadlines) {
+        hwc_remove_core(cid);
+        hwc_delete_contract(cid);
     }
 
     zsim_roi_end();

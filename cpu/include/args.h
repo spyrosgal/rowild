@@ -30,7 +30,9 @@ class StringView {
 public:
     StringView() = default;
 
-    StringView(const char* str) : start(str), end(start + strlen(str)) {}
+    StringView(const char* str) : start(str), end(start + strlen(str)) {
+        std::cout << "StringView created from const char*: " << str << std::endl;
+    }
     StringView(const std::string& str) : start(str.c_str()),
         end(start + str.size()) {}
 
@@ -451,7 +453,17 @@ class Parser : public ParserBase {
 public:
     Parser(const char* _app_name, int argc, const char **argv, bool _silent=false)
     : app_name(_app_name), silent(_silent) {
-        for (int i=1; i<argc; i++) { args.emplace_back(argv[i]); }
+        std::cout << "Parser created with app name: " << app_name << std::endl;
+        std::cout << "args before adding: " << args.size() << std::endl;
+        args.clear();
+        for (int i=1; i<argc; i++) { 
+            std::cout << "Adding arg: " << argv[i] << std::endl;
+            std::cout << "Total args before adding: " << args.size() << std::endl;
+            args.push_back(argv[i]);
+            std::cout << "Total args after adding: " << args.size() << std::endl;
+        }
+
+        std::cout << "Total args: " << args.size() << std::endl;
     }
 
 // Adding arguments
@@ -544,7 +556,16 @@ public:
 // Parsing arguments
 //////////////////////////////////////////////////////////////////////////////
     Result parse() {
-
+        // args.clear();
+        std::cout << "Parsing " << args.size() << " arguments." << std::endl;
+        std::cout << "Arg: " << args[0] << std::endl;
+        std::cout << "Arg: " << args[1] << std::endl;
+        // std::cout << "Arg: " << args[2] << std::endl;
+        // std::cout << "Arg: " << args[3] << std::endl;
+        // std::cout << "Arg: " << args[4] << std::endl;
+        // for(const auto& arg : args) {
+        //     std::cout << "Arg: " << arg << std::endl;
+        // }
         std::reverse(args.begin(), args.end());
 
         while (!args.empty()) {
