@@ -33,7 +33,7 @@
 
 class Arm {
   public:
-    explicit Arm(const char *fileName) {
+    explicit Arm(const char *fileName, int num_reps) {
         std::ifstream file(fileName);
         assert(file.good());
         std::string token;
@@ -75,7 +75,11 @@ class Arm {
                 cfg[j] = value;
                 j++;
             }
-            this->startCfgs.push_back(cfg);
+            for(int k = 0; k < num_reps; k++) {
+                double *temp_cfg = new double[this->dof];
+                for(int s = 0; s < this->dof; s++)  temp_cfg[s] = cfg[s];
+                this->startCfgs.push_back(temp_cfg);
+            }
             assert(j == this->dof);
             assert(!row.good());
         }
@@ -96,7 +100,11 @@ class Arm {
                 cfg[j] = value;
                 j++;
             }
-            this->goalCfgs.push_back(cfg);
+            for(int k = 0; k < num_reps; k++) {
+                double *temp_cfg = new double[this->dof];
+                for(int s = 0; s < this->dof; s++)  temp_cfg[s] = cfg[s];
+                this->goalCfgs.push_back(temp_cfg);
+            }
             assert(j == this->dof);
             assert(!row.good());
         }

@@ -90,29 +90,6 @@ int main(int argc, const char **argv) {
     const char *outputFile =
         outputPathArg.found() ? outputPathArg.value().c_str() : "/dev/null";
 
-    Environment *env = new Environment(inputFile);
-    Arm *arm = new Arm(configFile);
-
-    int armDof = arm->getDof();
-    int armLinkLength = arm->getLinkLength();
-
-    Planner *thePlanner = nullptr;
-    if (strcmp(plannerType, "PRM") == 0) {
-        thePlanner = new PRM(env, armDof, armLinkLength, epsilon, radius,
-                             samples, aStarWeight);
-    } else if (strcmp(plannerType, "RRT") == 0) {
-        thePlanner = new RRT(env, armDof, armLinkLength, epsilon, radius,
-                             samples, goalBias, 0 /*No post-processing*/);
-    } else if (strcmp(plannerType, "RRTStar") == 0) {
-        thePlanner = new RRTStar(env, armDof, armLinkLength, epsilon, radius,
-                                 samples, goalBias);
-    } else if (strcmp(plannerType, "RRTPostProc") == 0) {
-        thePlanner = new RRT(env, armDof, armLinkLength, epsilon, radius,
-                             samples, goalBias, ppIterations);
-    } else {
-        assert_msg(false, "Unknown planner: %s", plannerType);
-    }
-
     // Clear the output path file before writing
     // std::ofstream pathFile;
     // pathFile.open(outputFile, std::ios_base::out | std::ios_base::trunc);
@@ -130,54 +107,80 @@ int main(int argc, const char **argv) {
     getcpu(&cpu_id, &node);
 
     uint64_t cid = 0;
-    
+
     if(deadlines) {
         cid = hwc_create_contract();
         hwc_add_core(cid);
-        hwc_set_deadline(cid, 500);
+        hwc_set_deadline(cid, 450);
     }
 
-    for(int i = 0; i < num_runs; i++) {
-        if(should_m5_exit) m5_exit(0);
+    Environment *env = new Environment(inputFile);
+    Arm *arm = new Arm(configFile, (num_runs + 19) / 20); // TODO: Remember that 20 is based on the specific input file
 
+    int armDof = arm->getDof();
+    int armLinkLength = arm->getLinkLength();
+
+    Planner *thePlanner = nullptr;
+    if (strcmp(plannerType, "PRM") == 0) {
+        thePlanner = new PRM(env, armDof, armLinkLength, epsilon, radius,
+                            samples, aStarWeight);
+    } else if (strcmp(plannerType, "RRT") == 0) {
+        thePlanner = new RRT(env, armDof, armLinkLength, epsilon, radius,
+                            samples, goalBias, 0 /*No post-processing*/);
+    } else if (strcmp(plannerType, "RRTStar") == 0) {
+        thePlanner = new RRTStar(env, armDof, armLinkLength, epsilon, radius,
+                                samples, goalBias);
+    } else if (strcmp(plannerType, "RRTPostProc") == 0) {
+        thePlanner = new RRT(env, armDof, armLinkLength, epsilon, radius,
+                            samples, goalBias, ppIterations);
+    } else {
+        assert_msg(false, "Unknown planner: %s", plannerType);
+    }
+
+    int sz = static_cast<int>(arm->getGoalCfgs().size());
+    for (int i = 0; i < num_runs; i++) {
+        if(should_m5_exit) m5_exit(0);
         if(deadlines) hwc_start_roi(cid);
 
-        for (int i = 0; i < static_cast<int>(arm->getGoalCfgs().size()); i++) {
-            double *startCfg = arm->getStartCfgs()[i];
-            double *goalCfg = arm->getGoalCfgs()[i];
+        double *startCfg = arm->getStartCfgs()[i];
+        double *goalCfg = arm->getGoalCfgs()[i];
 
-            auto t0 = high_resolution_clock::now();
+        auto t0 = high_resolution_clock::now();
 
-            // ROI begins
-            zsim_roi_begin();
+        // ROI begins
+        zsim_roi_begin();
 
-            std::vector<double *> path = thePlanner->query(startCfg, goalCfg);
+        std::vector<double *> path = thePlanner->query(startCfg, goalCfg);
 
-            zsim_roi_end();
-            // ROI ends
+        zsim_roi_end();
+        // ROI ends
 
-            auto t1 = high_resolution_clock::now();
-            __totalTime += duration_cast<nanoseconds>(t1 - t0).count() * 1e-9;
-            __numQueries++;
+        auto t1 = high_resolution_clock::now();
+        __totalTime += duration_cast<nanoseconds>(t1 - t0).count() * 1e-9;
+        __numQueries++;
 
-            // query() is supposed to return a path from goal to start; the path
-            // should be reversed before sending to actuators. This is simply an
-            // implementation choice; this way, I put the 'reversing' operations
-            // off the critical path
-            // std::reverse(path.begin(), path.end());
-            // outputPath(outputFile, startCfg, goalCfg, path, armDof,
-            //            thePlanner->calcPathCost(path));
-
-            // The allocated memory for PRM cfgs should not be deleted as they are
-            // used for the next iterations.
-            if (strcmp(plannerType, "PRM") != 0) {
-                for (double *p : path)
-                    delete[] p;
-            }
-        }
-
+        if(deadlines) hwc_end_roi(cid);
         if(should_m5_exit) m5_exit(0);
+
+        // query() is supposed to return a path from goal to start; the path
+        // should be reversed before sending to actuators. This is simply an
+        // implementation choice; this way, I put the 'reversing' operations
+        // off the critical path
+        // std::reverse(path.begin(), path.end());
+        // outputPath(outputFile, startCfg, goalCfg, path, armDof,
+        //            thePlanner->calcPathCost(path));
+
+        // The allocated memory for PRM cfgs should not be deleted as they are
+        // used for the next iterations.
+        if (strcmp(plannerType, "PRM") != 0) {
+            for (double *p : path)
+                delete[] p;
+        }
     }
+
+    delete env;
+    delete arm;
+    delete thePlanner;
 
     if(deadlines) {
         hwc_remove_core(cid);
@@ -197,10 +200,6 @@ int main(int argc, const char **argv) {
         //               << ", numQueries=" << __numQueries << std::endl;
         // }
     };
-
-    delete env;
-    delete arm;
-    delete thePlanner;
 
     printStats(PRINT_SEVERITY);
 

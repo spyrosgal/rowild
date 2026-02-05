@@ -71,6 +71,9 @@ int main(int argc, const char **argv) {
     std::cout << "SLAM Gem5 Harness" << std::endl;
 
     Parser parser(argv[0], argc, argv, false);
+    KVArg<int> numRunsArg(parser, "num_runs", "", "Number of repetitions");
+    KVArg<int> m5exitArg(parser, "m5_exit", "", "Whether m5_exit should be called before and after the benchmark");
+    KVArg<int> deadlinesArg(parser, "deadlines", "", "Whether we should actually track deadlines");
     KVArg<std::string> inputArg(parser, "log", "", "Input log file");
     KVArg<std::string> algorithmArg(parser, "alg", "",
                                     "SLAM algorithm [EKF Fast GraphBased]");
@@ -83,6 +86,9 @@ int main(int argc, const char **argv) {
     assert_msg(inputArg.found(), "Input log file is not provided");
     assert_msg(algorithmArg.found(), "Input SLAM algorithm is not provided");
 
+    const int num_runs = numRunsArg.found() ? numRunsArg.value() : 10000000;
+    const int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 0;
+    const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
     std::string inputFile = inputArg.value();
     const char *slamAlgorithm = algorithmArg.value().c_str();
     int numParticles = particlesArg.found() ? particlesArg.value() : 100;
@@ -120,18 +126,19 @@ int main(int argc, const char **argv) {
     // ROI begins
     zsim_roi_begin();
     
-    uint64_t cid = hwc_create_contract();
+    uint64_t cid = 0;
 
-    hwc_add_core(cid);
+    if(deadlines){
+        cid = hwc_create_contract();
+        hwc_add_core(cid);
+        hwc_set_deadline(cid, 100);
+    }
 
-    hwc_set_deadline(cid, 100);
-
-    int num_iters = 0;
-    while(1) {
+    for(int i = 0; i < num_runs; i++) {
         // outputLog.push_back(slam->getStatus());
+        if(should_m5_exit) m5_exit(0);
+        if(deadlines) hwc_start_roi(cid);
         for (auto input : inputLog) {
-            hwc_start_roi(cid);
-            num_iters++;
             // if(!(num_iters % 1000)) {
             //     char m5_buf[32];
             //     int len = sprintf(m5_buf, "%d\n", num_iters);
@@ -149,11 +156,15 @@ int main(int argc, const char **argv) {
 
             // outputLog.push_back(slam->getStatus());
         }
+
+        if(deadlines) hwc_end_roi(cid);
+        if(should_m5_exit) m5_exit(0);
     }
 
-    hwc_remove_core(cid);
-
-    hwc_delete_contract(cid);
+    if(deadlines) {
+        hwc_remove_core(cid);
+        hwc_delete_contract(cid);
+    }
 
     zsim_roi_end();
     // ROI ends

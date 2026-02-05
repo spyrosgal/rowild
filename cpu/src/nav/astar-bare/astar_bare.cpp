@@ -30,6 +30,7 @@
 #include <climits>
 #include <limits.h>
 #include <vector>
+#include <iostream>
 
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
@@ -79,6 +80,7 @@ PATH AStar::searchWithAstar(uint64_t maxIterations) {
     auto baseTime = high_resolution_clock::now();
     uint64_t numExpansions = 0;
     while (!openList.empty()) {
+        // if(!(numExpansions % 10000)) std::cout << numExpansions << std::endl;
         Node *expNode = openList.top();
         openList.pop();
 

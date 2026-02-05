@@ -214,6 +214,8 @@ int main(int argc, const char **argv) {
     // std::cout << "Sym Gem5 Harness" << std::endl;
 
     Parser parser(argv[0], argc, argv, false);
+    KVArg<int> numRunsArg(parser, "num_runs", "", "Number of repetitions");
+    KVArg<int> m5exitArg(parser, "m5_exit", "", "Whether m5_exit should be called before and after the benchmark");
     KVArg<int> deadlinesArg(parser, "deadlines", "", "Whether we should actually track deadlines");
     KVArg<std::string> inputArg(parser, "input", "", "Input problem");
     KVArg<int> aStarWeightArg(parser, "weight", "", "A* weight");
@@ -223,6 +225,8 @@ int main(int argc, const char **argv) {
 
     assert_msg(inputArg.found(), "Input problem file is not provided");
 
+    const int num_runs = numRunsArg.found() ? numRunsArg.value() : 10000000;
+    const int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 0;
     const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
     const char *inputFile = inputArg.value().c_str();
     int aStarWeight = aStarWeightArg.found() ? aStarWeightArg.value() : 1;
@@ -242,9 +246,12 @@ int main(int argc, const char **argv) {
         hwc_set_deadline(cid, 3700);
     }
 
-    while (1) {
+    for(int i = 0; i < num_runs; i++) {
+        if(should_m5_exit) m5_exit(0);
         if(deadlines) hwc_start_roi(cid);
         std::list<GroundedAction> actions = plan(env, aStarWeight);
+        if(deadlines) hwc_end_roi(cid);
+        if(should_m5_exit) m5_exit(0);
     }
 
     if(deadlines) {
