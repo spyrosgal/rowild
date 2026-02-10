@@ -243,7 +243,7 @@ int main(int argc, const char **argv) {
     if(deadlines){
         cid = hwc_create_contract();
         hwc_add_core(cid);
-        hwc_set_deadline(cid, 3700);
+        hwc_set_deadline(cid, 4500); // Actual execution time is just over 3700, give some margin
     }
 
     for(int i = 0; i < num_runs; i++) {

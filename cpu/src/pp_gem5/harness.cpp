@@ -101,7 +101,10 @@ int main(int argc, const char **argv) {
     if(deadlines) {
         cid = hwc_create_contract();
         hwc_add_core(cid);
-        hwc_set_deadline(cid, 300);
+        hwc_set_deadline(cid, 350);
+        hwc_update_linreg(cid, 0, 2.201125e+00);
+        hwc_update_linreg(cid, 1, 2.491702e-02);
+        hwc_update_linreg(cid, 2, -7003544.366);
     }
 
     for(int i = 0; i < num_runs; i++) {
