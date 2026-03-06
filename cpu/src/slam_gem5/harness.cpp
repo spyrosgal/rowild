@@ -87,7 +87,7 @@ int main(int argc, const char **argv) {
     assert_msg(algorithmArg.found(), "Input SLAM algorithm is not provided");
 
     const int num_runs = numRunsArg.found() ? numRunsArg.value() : 10000000;
-    const int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 0;
+    int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 0;
     const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
     std::string inputFile = inputArg.value();
     const char *slamAlgorithm = algorithmArg.value().c_str();
@@ -122,6 +122,10 @@ int main(int argc, const char **argv) {
     }
 
     std::vector<std::vector<double>> outputLog;
+
+    should_m5_exit = 1;
+
+    if(should_m5_exit) m5_exit(0);
 
     // ROI begins
     zsim_roi_begin();

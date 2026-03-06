@@ -67,35 +67,46 @@ void loadLog(std::string inputFile) {
 }
 
 int main(int argc, const char **argv) {
-    using args::KVArg;
-    using args::Parser;
+    // using args::KVArg;
+    // using args::Parser;
 
-    Parser parser(argv[0], argc, argv, false);
-    KVArg<int> numRunsArg(parser, "num_runs", "", "Number of repetitions");
-    KVArg<int> m5exitArg(parser, "m5_exit", "", "Whether m5_exit should be called before and after the benchmark");
-    KVArg<int> deadlinesArg(parser, "deadlines", "", "Whether we should actually track deadlines");
-    KVArg<std::string> logFileArg(parser, "log", "", "Input log file");
-    KVArg<double> dtArg(parser, "dt", "", "Time step");
-    KVArg<double> thresholdArg(parser, "threshold", "", "Close enough to goal");
-    KVArg<double> maxLinSpeedArg(parser, "max-lin-speed", "",
-                                 "Maximum linear speed");
-    KVArg<double> maxAngSpeedArg(parser, "max-ang-speed", "",
-                                 "Maximum angular speed");
-    KVArg<std::string> outArg(parser, "output", "", "Output log file");
+    // Parser parser(argv[0], argc, argv, false);
+    // KVArg<int> numRunsArg(parser, "num_runs", "", "Number of repetitions");
+    // KVArg<int> m5exitArg(parser, "m5_exit", "", "Whether m5_exit should be called before and after the benchmark");
+    // KVArg<int> deadlinesArg(parser, "deadlines", "", "Whether we should actually track deadlines");
+    // KVArg<std::string> logFileArg(parser, "log", "", "Input log file");
+    // KVArg<double> dtArg(parser, "dt", "", "Time step");
+    // KVArg<double> thresholdArg(parser, "threshold", "", "Close enough to goal");
+    // KVArg<double> maxLinSpeedArg(parser, "max-lin-speed", "",
+    //                              "Maximum linear speed");
+    // KVArg<double> maxAngSpeedArg(parser, "max-ang-speed", "",
+    //                              "Maximum angular speed");
+    // KVArg<std::string> outArg(parser, "output", "", "Output log file");
 
-    if (!parser.parse()) assert(false);
+    // if (!parser.parse()) assert(false);
 
-    assert_msg(logFileArg.found(), "Input file is not provided");
+    // assert_msg(logFileArg.found(), "Input file is not provided");
 
-    std::string logFileName = logFileArg.value();
-    const int num_runs = numRunsArg.found() ? numRunsArg.value() : 2;
-    const int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 1;
-    const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
-    double dt = dtArg.found() ? dtArg.value() : 0.01;
-    double threshold = thresholdArg.found() ? thresholdArg.value() : 0.001;
-    double maxLinSpeed = maxLinSpeedArg.found() ? maxLinSpeedArg.value() : 15.0;
-    double maxAngSpeed = maxAngSpeedArg.found() ? maxAngSpeedArg.value() : 7.0;
-    std::string outputFile = outArg.found() ? outArg.value() : "/dev/null";
+    std::string logFileName = "./rowild/cpu/src/movtop_gem5/movtop_gem5.out";
+    // const int num_runs = numRunsArg.found() ? numRunsArg.value() : 2;
+    // const int should_m5_exit = m5exitArg.found() ? m5exitArg.value() : 1;
+    // const int deadlines = deadlinesArg.found() ? deadlinesArg.value() : 1;
+    // double dt = dtArg.found() ? dtArg.value() : 0.01;
+    // double threshold = thresholdArg.found() ? thresholdArg.value() : 0.001;
+    // double maxLinSpeed = maxLinSpeedArg.found() ? maxLinSpeedArg.value() : 15.0;
+    // double maxAngSpeed = maxAngSpeedArg.found() ? maxAngSpeedArg.value() : 7.0;
+    // std::string outputFile = outArg.found() ? outArg.value() : "/dev/null";
+
+    // const int num_runs = (argc > 1) ? atoi(argv[1]) : 2;
+    // const int should_m5_exit = (argc > 2) ? atoi(argv[2]) : 1;
+    // const int deadlines = (argc > 3) ? atoi(argv[3]) : 1;
+    const int num_runs = 100;
+    const int should_m5_exit = 1;
+    const int deadlines = 1;
+    double dt = 0.1;
+    double threshold = 0.01;
+    double maxLinSpeed = 15.0;
+    double maxAngSpeed = 7.0;
 
     loadLog(logFileName);
     assert(theLog.size() % 2 == 0);
@@ -104,12 +115,17 @@ int main(int argc, const char **argv) {
         new MoveController(dt, threshold, maxLinSpeed, maxAngSpeed);
     std::vector<std::vector<std::pair<double, double>>> trajLog;
 
+    if(should_m5_exit) m5_exit(0);
+    
     uint64_t cid = 0;
 
     if(deadlines) {
         cid = hwc_create_contract();
         hwc_add_core(cid);
         hwc_set_deadline(cid, 200);
+        hwc_update_linreg(cid, 0, 3.814825e-01);
+        hwc_update_linreg(cid, 1, 8.271875e-01);
+        hwc_update_linreg(cid, 2, 2166.905);
     }
 
     // ROI begins
